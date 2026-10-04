@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Danna Paola ❤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+        .letter-card {
+            transition: all 0.25s ease-in-out;
+        }
+        .comparing {
+            transform: translateY(-8px) scale(1.1);
+            box-shadow: 0 10px 20px -5px rgba(236, 72, 153, 0.5);
+            border-color: #ec4899 !important;
+            background-color: #fce7f3 !important;
+        }
+        .correct {
+            border-color: #10b981 !important;
+            background-color: #ecfdf5 !important;
+            color: #047857 !important;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-rose-100 via-purple-50 to-pink-100 min-h-screen flex flex-col items-center justify-center p-4 relative overflow-x-hidden">
+
+    <main class="z-10 w-full max-w-5xl bg-white/80 backdrop-blur-md p-6 md:p-10 rounded-3xl shadow-2xl border border-white/50 text-center my-8">
+        
+        <!-- Encabezado Romántico -->
+        <div class="mb-8">
+            <span class="inline-block bg-pink-100 text-pink-600 font-semibold px-4 py-1.5 rounded-full text-sm mb-3">
+                Un detalle con mucho cariño 💌
+            </span>
+            <h1 class="text-3xl md:text-5xl font-bold text-gray-800 tracking-tight mb-2">
+                Donde todo cobra sentido... ✨
+            </h1>
+            <p class="text-gray-600 text-sm md:text-base max-w-xl mx-auto italic">
+                "Porque en lo imperfecto se encuentra lo perfecto, y eso eres tú."
+            </p>
+        </div>
+
+        <!-- Contenedor de las fichas de letras -->
+        <div id="lettersContainer" class="flex flex-wrap justify-center gap-1.5 md:gap-2 my-8 min-h-[140px] items-center p-4 bg-rose-50/50 rounded-2xl border border-rose-100">
+        </div>
+
+        <!-- Panel de Control e Información -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-left bg-white p-4 rounded-xl shadow-inner border border-gray-100 text-xs md:text-sm">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-gray-700">Paso actual:</span>
+                <span id="stepCount" class="bg-gray-100 px-2 py-1 rounded font-mono text-pink-600 font-bold">0</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-gray-700">Intercambios:</span>
+                <span id="swapCount" class="bg-gray-100 px-2 py-1 rounded font-mono text-pink-600 font-bold">0</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-gray-700">Velocidad:</span>
+                <input type="range" id="speedRange" min="50" max="500" value="250" class="w-full accent-pink-500 cursor-pointer">
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex flex-wrap justify-center gap-4">
+            <button id="btnStart" onclick="toggleSort()" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg hover:shadow-pink-500/30 transition-all transform active:scale-95 flex items-center gap-2 text-base">
+                <span id="btnText">✨ Descubrir mensaje</span>
+            </button>
+            <button onclick="resetSort()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-6 py-3.5 rounded-2xl transition-all transform active:scale-95 text-base">
+                🔄 Volver a empezar
+            </button>
+        </div>
+
+        <!-- Tarjeta de Mensaje Final -->
+        <div id="finalCard" class="hidden mt-8 p-6 bg-gradient-to-br from-pink-500 to-rose-600 text-white rounded-2xl shadow-xl transform transition-all duration-500 scale-90 opacity-0">
+            <h2 class="text-2xl md:text-3xl font-bold mb-2">Como el orden de las letras, todo es perfecto a tu lado ✨</h2>
+            <p class="text-pink-100 text-base md:text-xl font-medium">
+                Te amo mi amor Danna Paola Torres Zumaya (mi prometida) ❤
+            </p>
+        </div>
+
+    </main>
+
+    <script>
+        const targetString = "Te amo mi amor Danna Paola Torres Zumaya (mi prometida)";
+        const targetArray = targetString.split("");
+        
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            let arr = [...array];
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [arr[currentIndex], arr[randomIndex]] = [arr[randomIndex], arr[currentIndex]];
+            }
+            return arr;
+        }
+
+        const initialArray = shuffle(targetArray);
+        
+        let currentArray = [...initialArray];
+        let isSorting = false;
+        let stepCount = 0;
+        let swapCount = 0;
+        let timer = null;
+
+        let i = 0;
+        let j = 0;
+        let swappedInPass = false;
+
+        const container = document.getElementById("lettersContainer");
+        const stepElement = document.getElementById("stepCount");
+        const swapElement = document.getElementById("swapCount");
+        const speedInput = document.getElementById("speedRange");
+        const btnText = document.getElementById("btnText");
+        const finalCard = document.getElementById("finalCard");
+
+        function renderLetters() {
+            container.innerHTML = "";
+            currentArray.forEach((char, idx) => {
+                const card = document.createElement("div");
+                card.id = `card-${idx}`;
+                card.className = `letter-card flex items-center justify-center w-6 h-9 md:w-8 md:h-11 bg-white border-2 border-rose-200 rounded-lg text-sm md:text-base font-bold text-gray-800 shadow-sm ${char === ' ' ? 'border-dashed bg-rose-50/30' : ''}`;
+                card.innerText = char === ' ' ? '␣' : char;
+                if (char === ' ') card.classList.add('text-rose-300');
+                container.appendChild(card);
+            });
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.letter-card').forEach(card => {
+                card.classList.remove('comparing');
+            });
+        }
+
+        function getSpeed() {
+            return 550 - parseInt(speedInput.value);
+        }
+
+        function stepAlgorithm() {
+            if (!isSorting) return;
+
+            const n = currentArray.length;
+
+            if (i < n - 1) {
+                if (j < n - 1 - i) {
+                    stepCount++;
+                    stepElement.innerText = stepCount;
+
+                    clearHighlights();
+                    const cardA = document.getElementById(`card-${j}`);
+                    const cardB = document.getElementById(`card-${j + 1}`);
+
+                    if (cardA) cardA.classList.add("comparing");
+                    if (cardB) cardB.classList.add("comparing");
+
+                    let needsSwap = false;
+                    if (currentArray[j] !== targetArray[j]) {
+                        if (currentArray[j] > currentArray[j+1] || currentArray[j+1] === targetArray[j+1]) {
+                            needsSwap = true;
+                        }
+                    }
+
+                    if (needsSwap) {
+                        let temp = currentArray[j];
+                        currentArray[j] = currentArray[j + 1];
+                        currentArray[j + 1] = temp;
+
+                        swapCount++;
+                        swapElement.innerText = swapCount;
+                        swappedInPass = true;
+
+                        renderLetters();
+                        const newCardA = document.getElementById(`card-${j}`);
+                        const newCardB = document.getElementById(`card-${j + 1}`);
+                        if (newCardA) newCardA.classList.add("comparing");
+                        if (newCardB) newCardB.classList.add("comparing");
+                    }
+
+                    j++;
+                    timer = setTimeout(stepAlgorithm, getSpeed());
+                } else {
+                    const fixedCard = document.getElementById(`card-${n - 1 - i}`);
+                    if (fixedCard) fixedCard.classList.add("correct");
+
+                    if (!swappedInPass && i > 0) {
+                        finishSorting();
+                        return;
+                    }
+
+                    i++;
+                    j = 0;
+                    swappedInPass = false;
+                    timer = setTimeout(stepAlgorithm, getSpeed());
+                }
+            } else {
+                finishSorting();
+            }
+        }
+
+        function toggleSort() {
+            if (isSorting) {
+                isSorting = false;
+                clearTimeout(timer);
+                btnText.innerText = "▶ Pausado";
+            } else {
+                isSorting = true;
+                btnText.innerText = "⏸ Pausar";
+                stepAlgorithm();
+            }
+        }
+
+        function finishSorting() {
+            isSorting = false;
+            clearTimeout(timer);
+            clearHighlights();
+
+            currentArray = [...targetArray];
+            renderLetters();
+
+            document.querySelectorAll('.letter-card').forEach(card => card.classList.add("correct"));
+
+            btnText.innerText = "✨ ¡Completado!";
+            
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+            }
+
+            finalCard.classList.remove("hidden");
+            setTimeout(() => {
+                finalCard.classList.remove("scale-90", "opacity-0");
+                finalCard.classList.add("scale-100", "opacity-100");
+            }, 100);
+        }
+
+        function resetSort() {
+            isSorting = false;
+            clearTimeout(timer);
+            
+            i = 0;
+            j = 0;
+            swappedInPass = false;
+            stepCount = 0;
+            swapCount = 0;
+
+            stepElement.innerText = "0";
+            swapElement.innerText = "0";
+            btnText.innerText = "✨ Descubrir mensaje";
+            
+            currentArray = shuffle(targetArray);
+            renderLetters();
+
+            finalCard.classList.add("hidden", "scale-90", "opacity-0");
+            finalCard.classList.remove("scale-100", "opacity-100");
+        }
+
+        window.onload = renderLetters;
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Título de la página</title>
+</head>
+<body>
+    
+</body>
+</html>
